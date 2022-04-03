@@ -7,4 +7,7 @@ load_dotenv(os.path.join(basedir, '.env'), encoding='utf-8')  # 加载.env文件
 
 
 class Config(object):
-    pass
+    """配置类"""
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
+                              'sqlite:///' + os.path.join(basedir, 'app.db')  # 数据库地址
+    SQLALCHEMY_TRACK_MODIFICATIONS = False  # 关闭追踪数据库修改
