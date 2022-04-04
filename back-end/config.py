@@ -11,3 +11,4 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
                               'sqlite:///' + os.path.join(basedir, 'app.db')  # 数据库地址
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # 关闭追踪数据库修改
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'  # 密钥

@@ -1,9 +1,9 @@
 <template>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin-bottom: 20px;">
-    <div class="container">
+<section>
+  <div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin-bottom: 20px;">
       <router-link class="navbar-brand" to="/">
-        <img alt="" class="d-inline-block align-top" height="30"
-             src="https://getbootstrap.com/docs/4.1/assets/brand/bootstrap-solid.svg" width="30">
+        <img alt="" class="d-inline-block align-top" height="30" src="../assets/bootstrap-solid.svg" width="30">
         MadBlog
       </router-link>
       <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"
@@ -32,7 +32,8 @@
             <a class="nav-link disabled" href="#">Messages</a>
           </li>
           <li class="nav-item">
-            <router-link class="nav-link" to="/profile">Profile</router-link>
+            <router-link class="nav-link" v-bind:to="{ name: 'Profile', params: { id: sharedState.user_id }}">Profile
+            </router-link>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#" v-on:click="handlerLogout">Logout</a>
@@ -44,8 +45,9 @@
           </li>
         </ul>
       </div>
-    </div>
-  </nav>
+    </nav>
+  </div>
+</section>
 </template>
 
 <script>
@@ -61,6 +63,7 @@ export default {
   methods: {
     handlerLogout(e) {
       store.logoutAction()
+      this.$toasted.show('You have been logged out.', {icon: 'fingerprint'})
       this.$router.push('/login')
     }
   }

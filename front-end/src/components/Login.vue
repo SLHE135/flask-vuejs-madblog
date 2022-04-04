@@ -1,24 +1,19 @@
 <template>
   <div class="container">
-    <alert
-      v-if="sharedState.is_new"
-      v-bind:message="alertMessage"
-      v-bind:variant="alertVariant">
-    </alert>
     <h1>Sign In</h1>
     <div class="row">
       <div class="col-md-4">
         <form @submit.prevent="onSubmit">
           <div class="form-group">
             <label for="username">Username</label>
-            <input id="username" v-model="loginForm.username" class="form-control"
-                   placeholder="" type="text" v-bind:class="{'is-invalid': loginForm.usernameError}">
+            <input id="username" v-model="loginForm.username" class="form-control" placeholder="" type="text"
+                   v-bind:class="{'is-invalid': loginForm.usernameError}">
             <div v-show="loginForm.usernameError" class="invalid-feedback">{{ loginForm.usernameError }}</div>
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input id="password" v-model="loginForm.password" class="form-control"
-                   placeholder="" type="password" v-bind:class="{'is-invalid': loginForm.passwordError}">
+            <input id="password" v-model="loginForm.password" class="form-control" placeholder="" type="password"
+                   v-bind:class="{'is-invalid': loginForm.passwordError}">
             <div v-show="loginForm.passwordError" class="invalid-feedback">{{ loginForm.passwordError }}</div>
           </div>
           <button class="btn btn-primary" type="submit">Sign In</button>
@@ -37,20 +32,13 @@
 </template>
 
 <script>
-import axios from 'axios'
-import Alert from './Alert'
 import store from '../store.js'
 
 export default {
   name: 'Login',  //this is the name of the component
-  components: {
-    alert: Alert
-  },
   data() {
     return {
       sharedState: store.state,
-      alertVariant: 'info',
-      alertMessage: 'Congratulations, you are now a registered user !',
       loginForm: {
         username: '',
         password: '',
@@ -85,9 +73,9 @@ export default {
         return false
       }
 
-      const path = 'http://localhost:5000/api/tokens'
+      const path = '/tokens'
       // axios 实现Basic Auth需要在config中设置 auth 这个属性即可
-      axios.post(path, {}, {
+      this.$axios.post(path, {}, {
         auth: {
           'username': this.loginForm.username,
           'password': this.loginForm.password
@@ -95,8 +83,10 @@ export default {
       }).then((response) => {
         // handle success
         window.localStorage.setItem('madblog-token', response.data.token)
-        store.resetNotNewAction()
         store.loginAction()
+
+        const name = JSON.parse(atob(response.data.token.split('.')[1])).name
+        this.$toasted.success(`Welcome ${name}!`, {icon: 'fingerprint'})
 
         if (typeof this.$route.query.redirect == 'undefined') {
           this.$router.push('/')

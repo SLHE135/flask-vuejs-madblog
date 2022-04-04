@@ -6,36 +6,25 @@
         <form @submit.prevent="onSubmit">
           <div class="form-group">
             <label for="username">Username</label>
-            <input id="username" v-model="registerForm.username" class="form-control"
-                   placeholder="" type="text" v-bind:class="{'is-invalid': registerForm.usernameError}">
+            <input id="username" v-model="registerForm.username" class="form-control" placeholder="" type="text"
+                   v-bind:class="{'is-invalid': registerForm.usernameError}">
             <div v-show="registerForm.usernameError" class="invalid-feedback">{{ registerForm.usernameError }}</div>
           </div>
           <div class="form-group">
             <label for="email">Email address</label>
-            <input id="email" v-model="registerForm.email" aria-describedby="emailHelp"
-                   class="form-control" placeholder="" type="email"
-                   v-bind:class="{'is-invalid': registerForm.emailError}">
+            <input id="email" v-model="registerForm.email" aria-describedby="emailHelp" class="form-control"
+                   placeholder="" type="email" v-bind:class="{'is-invalid': registerForm.emailError}">
             <small v-if="!registerForm.emailError" id="emailHelp" class="form-text text-muted">We'll never share your
               email with anyone else.</small>
             <div v-show="registerForm.emailError" class="invalid-feedback">{{ registerForm.emailError }}</div>
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input id="password" v-model="registerForm.password" class="form-control"
-                   placeholder="" type="password" v-bind:class="{'is-invalid': registerForm.passwordError}">
+            <input id="password" v-model="registerForm.password" class="form-control" placeholder="" type="password"
+                   v-bind:class="{'is-invalid': registerForm.passwordError}">
             <div v-show="registerForm.passwordError" class="invalid-feedback">{{ registerForm.passwordError }}</div>
           </div>
-          <!--密码二次校正-->
-          <div class="form-group">
-            <label for="password_confirmation">Password confirmation</label>
-            <input id="password_confirmation" v-model="registerForm.password_confirmation" class="form-control"
-                   placeholder="" type="password"
-                   v-bind:class="{'is-invalid': registerForm.password_confirmationError}">
-            <div v-show="registerForm.password_confirmationError" class="invalid-feedback">
-              {{ registerForm.password_confirmationError }}
-            </div>
-          </div>
-          <button class="btn btn-primary" type="submit">Submit</button>
+          <button class="btn btn-primary" type="submit">Register</button>
         </form>
       </div>
     </div>
@@ -43,9 +32,6 @@
 </template>
 
 <script>
-import axios from 'axios'
-import store from '../store.js'
-
 export default {
   name: 'Register', //this is the name of the component
   data() {
@@ -91,34 +77,21 @@ export default {
         this.registerForm.passwordError = null
       }
 
-      //密码二次校正
-      if (!this.registerForm.password_confirmation) {
-        this.registerForm.errors++
-        this.registerForm.password_confirmationError = 'Password confirmation required.'
-      } else if (this.registerForm.password !== this.registerForm.password_confirmation) {
-        this.registerForm.errors++
-        this.registerForm.password_confirmationError = 'Password confirmation must be same as password.'
-      } else {
-        this.registerForm.password_confirmationError = null
-      }
-
       if (this.registerForm.errors > 0) {
         // 表单验证没通过时，不继续往下执行，即不会通过 axios 调用后端API
         return false
       }
 
-      const path = 'http://localhost:5000/api/users'
+      const path = '/users'
       const payload = {
         username: this.registerForm.username,
         email: this.registerForm.email,
-        password: this.registerForm.password,
-        password_confirmation: this.registerForm.password_confirmation
-
+        password: this.registerForm.password
       }
-      axios.post(path, payload)
+      this.$axios.post(path, payload)
         .then((response) => {
           // handle success
-          store.setNewAction()
+          this.$toasted.success('Congratulations, you are now a registered user !', {icon: 'fingerprint'})
           this.$router.push('/login')
         })
         .catch((error) => {
@@ -130,8 +103,6 @@ export default {
               this.registerForm.emailError = error.response.data.message.email
             } else if (field == 'password') {
               this.registerForm.passwordError = error.response.data.message.password
-            } else if (field == 'password_confirmation') {
-              this.registerForm.password_confirmationError = error.response.data.message.password_confirmation
             }
           }
         })
