@@ -28,6 +28,12 @@ def create_user():
         message['username'] = '用户名已经存在，请使用不同的用户名。'
     if User.query.filter_by(email=data.get('email', None)).first():
         message['email'] = '电子邮件地址已经存在，请使用不同的电子邮件地址。'
+
+    # 两次密码输入不一致
+    if 'password' in data and 'password_confirmation' in data:
+        if data['password'] != data['password_confirmation']:
+            message['password_confirmation'] = '两次密码输入不一致。'
+
     if message:
         return bad_request(message)
 
