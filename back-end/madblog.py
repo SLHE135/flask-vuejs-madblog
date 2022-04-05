@@ -1,13 +1,19 @@
-from app import create_app, db
-from app.models import User
+from app import create_app
+from app.extensions import db
+from app.models import User, Post
+from config import Config
 
-app = create_app()  # 把app对象传给create_app()函数
+app = create_app(Config)
 
 
-# 启动程序
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
+
+
 @app.shell_context_processor
 def make_shell_context():
-    """
-    在flask shell命令行中可以使用的上下文
-    """
-    return {'db': db, 'User': User}
+    return {
+        'db': db,
+        'User': User,
+        'Post': Post}

@@ -4,7 +4,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin-bottom: 20px;">
       <router-link class="navbar-brand" to="/">
         <img alt="" class="d-inline-block align-top" height="30" src="../assets/bootstrap-solid.svg" width="30">
-        MadBlog
+          MadBlog
       </router-link>
       <button aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"
               class="navbar-toggler" data-target="#navbarSupportedContent" data-toggle="collapse" type="button">
@@ -15,6 +15,9 @@
         <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
           <li class="nav-item active">
             <router-link class="nav-link" to="/">Home <span class="sr-only">(current)</span></router-link>
+          </li>
+          <li class="nav-item">
+            <router-link class="nav-link" to="/ping">Ping</router-link>
           </li>
           <li class="nav-item">
             <a class="nav-link disabled" href="#">Explore</a>
@@ -51,7 +54,7 @@
 </template>
 
 <script>
-import store from '../store.js'
+import store from '../store'
 
 export default {
   name: 'Navbar',  //this is the name of the component
