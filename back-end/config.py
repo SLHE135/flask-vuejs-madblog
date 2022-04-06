@@ -12,3 +12,5 @@ class Config(object):
                               'sqlite:///' + os.path.join(basedir, 'app.db')  # 数据库地址
     SQLALCHEMY_TRACK_MODIFICATIONS = False  # 关闭追踪数据库修改
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'  # 密钥
+    POSTS_PER_PAGE = 10  # 每页显示的文章数量
+    USERS_PER_PAGE = 10  # 每页显示的用户数量
