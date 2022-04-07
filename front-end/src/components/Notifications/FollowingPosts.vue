@@ -5,8 +5,8 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Posts of {{ user.name || user.username }} 's following
-          <small v-if="posts">(共 {{ posts._meta.total_items }} 篇, {{ posts._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Following Posts <small v-if="posts">(共
+          {{ posts._meta.total_items }} 篇, {{ posts._meta.total_pages }} 页)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
           <span aria-expanded="false" aria-haspopup="true"
@@ -63,6 +63,7 @@
 </template>
 
 <script>
+import store from '../../store'
 import Post from '../Base/Post'
 import Pagination from '../Base/Pagination'
 
@@ -74,23 +75,11 @@ export default {
   },
   data() {
     return {
-      user: '',
+      sharedState: store.state,
       posts: ''
     }
   },
   methods: {
-    getUser(id) {
-      const path = `/api/users/${id}`
-      this.$axios.get(path)
-        .then((response) => {
-          // handle success
-          this.user = response.data
-        })
-        .catch((error) => {
-          // handle error
-          console.error(error)
-        })
-    },
     getUserFollowingPosts(id) {
       let page = 1
       let per_page = 5
@@ -115,15 +104,12 @@ export default {
     }
   },
   created() {
-    const user_id = this.$route.params.id
-    this.getUser(user_id)
-    this.getUserFollowingPosts(user_id)
+    this.getUserFollowingPosts(this.sharedState.user_id)
   },
-  // 当路由变化后重新加载数据
+  // 当路由变化后(比如变更查询参数 page 和 per_page)重新加载数据
   beforeRouteUpdate(to, from, next) {
     next()
-    this.getUser(to.params.id)
-    this.getUserFollowingPosts(to.params.id)
+    this.getUserFollowingPosts(this.sharedState.user_id)
   }
 }
 </script>

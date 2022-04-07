@@ -5,7 +5,7 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Your Comments <small v-if="comments">(共
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> User Comments <small v-if="comments">(共
           {{ comments._meta.total_items }} 条, {{ comments._meta.total_pages }} 页)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
@@ -45,13 +45,38 @@
         <div v-for="(comment, index) in comments.items" v-bind:id="'c' + comment.id"
              v-bind:key="index" class="comment-item media g-brd-around g-brd-gray-light-v4 g-pa-30 g-mb-20">
 
+          <router-link v-bind:to="{ path: `/user/${comment.author.id}` }">
+            <img
+              class="d-flex g-brd-around g-brd-gray-light-v3 g-pa-2 g-width-40 g-height-40 rounded-circle rounded mCS_img_loaded g-mt-3 g-mr-15"
+              v-bind:alt="comment.author.name || comment.author.username" v-bind:src="comment.author.avatar">
+          </router-link>
+
           <div class="media-body">
-            <div class="g-mb-15">
-              <h5 class="h5 g-color-gray-dark-v1 g-font-size-16 mb-0">你评论了文章
-                <router-link class="g-text-underline--none--hover"
-                             v-bind:to="{ name: 'PostDetail', params: { id: comment.post.id } }"><span
-                  class="h6">《{{ comment.post.title }}》</span></router-link>
-              </h5>
+
+            <div v-if="!comment.parent_id" class="g-mb-15">
+              <h5 class="h5 g-color-gray-dark-v1 mb-0">
+                <router-link class="comment-author g-text-underline--none--hover"
+                             v-bind:to="{ path: `/user/${comment.author.id}` }">
+                  {{ comment.author.name || comment.author.username }}
+                </router-link>
+                <span class="h6"> 评论了文章<router-link class="g-text-underline--none--hover"
+                                                    v-bind:to="{ name: 'PostDetail', params: { id: comment.post.id } }">《{{
+                    comment.post.title
+                  }}》</router-link></span></h5>
+              <span class="g-color-gray-dark-v4 g-font-size-12">{{
+                  $moment(comment.timestamp).format('YYYY年MM月DD日 HH:mm:ss')
+                }}</span>
+            </div>
+            <div v-else class="g-mb-15">
+              <h5 class="h5 g-color-gray-dark-v1 mb-0">
+                <router-link class="comment-author g-text-underline--none--hover"
+                             v-bind:to="{ path: `/user/${comment.author.id}` }">
+                  {{ comment.author.name || comment.author.username }}
+                </router-link>
+                <span class="h6"> 在文章<router-link class="g-text-underline--none--hover"
+                                                  v-bind:to="{ name: 'PostDetail', params: { id: comment.post.id } }">《{{
+                    comment.post.title
+                  }}》</router-link>中写了一条新评论</span></h5>
               <span class="g-color-gray-dark-v4 g-font-size-12">{{
                   $moment(comment.timestamp).format('YYYY年MM月DD日 HH:mm:ss')
                 }}</span>
@@ -62,8 +87,8 @@
               <!-- vue-markdown 开始解析markdown，它是子组件，通过 props 给它传值即可
               v-highlight 是自定义指令，用 highlight.js 语法高亮 -->
               <vue-markdown
-                v-highlight
                 :source="comment.body"
+                v-highlight
                 class="markdown-body g-mb-15">
               </vue-markdown>
             </div>

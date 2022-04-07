@@ -5,7 +5,7 @@
       <li class="list-inline-item">
         <router-link aria-label="Previous" class="u-pagination-v1__item u-pagination-v1-1 g-rounded-50 g-pa-12-21"
                      v-bind:class="{'u-pagination-v1__item--disabled': curPage == 1}"
-                     v-bind:to="{ path: $route.path, query: { page: curPage - 1, per_page: perPage }}">
+                     v-bind:to="{ path: $route.fullPath, query: { page: curPage - 1, per_page: perPage }}">
           <span aria-hidden="true">
             <i class="fa fa-angle-left"></i>
           </span>
@@ -17,7 +17,7 @@
           class="list-inline-item g-hidden-sm-down">
         <router-link class="u-pagination-v1__item u-pagination-v1-1 g-rounded-50 g-pa-12-19"
                      v-bind:class="{'u-pagination-v1-1--active': $route.query.page == page || (!$route.query.page && page == 1)}"
-                     v-bind:to="{ path: $route.path, query: { page: page, per_page: perPage }}">{{ page }}
+                     v-bind:to="{ path: $route.fullPath, query: { page: page, per_page: perPage }}">{{ page }}
         </router-link>
       </li>
       <li v-else class="list-inline-item g-hidden-sm-down">
@@ -27,7 +27,7 @@
       <li class="list-inline-item">
         <router-link aria-label="Next" class="u-pagination-v1__item u-pagination-v1-1 g-rounded-50 g-pa-12-21"
                      v-bind:class="{'u-pagination-v1__item--disabled': curPage == totalPages || totalPages == 0 }"
-                     v-bind:to="{ path: $route.path, query: { page: curPage + 1, per_page: perPage }}">
+                     v-bind:to="{ path: $route.fullPath, query: { page: curPage + 1, per_page: perPage }}">
           <span aria-hidden="true">
             <i class="fa fa-angle-right"></i>
           </span>

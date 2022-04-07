@@ -7,17 +7,21 @@
           <!-- Profile Picture -->
           <div v-if="user" class="text-center g-pos-rel g-mb-30">
             <div class="g-width-100 g-height-100 mx-auto mb-3">
-              <img class="img-fluid rounded-circle" v-bind:alt="user.name || user.username"
-                   v-bind:src="user._links.avatar">
+              <img class="img-fluid rounded-circle g-brd-around g-brd-gray-light-v4 g-pa-2"
+                   v-bind:alt="user.name || user.username" v-bind:src="user._links.avatar">
             </div>
 
             <span class="d-block g-font-weight-500">{{ user.name || user.username }}</span>
 
-            <span
-              class="u-icon-v3 u-icon-size--xs g-color-white--hover g-bg-primary--hover rounded-circle g-pos-abs g-top-0 g-right-15 g-cursor-pointer"
-              data-original-title="Change Profile Picture" data-placement="top" data-toggle="tooltip" title="">
-              <i class="icon-finance-067 u-line-icon-pro"></i>
-            </span>
+            <router-link v-bind:to="{ path: `/user/${sharedState.user_id}` }">
+              <span
+                class="u-icon-v3 u-icon-size--xs g-color-white--hover g-bg-primary--hover rounded-circle g-pos-abs g-top-0 g-right-15 g-cursor-pointer"
+                data-placement="top"
+                data-toggle="tooltip"
+                title="Go To Your Profile">
+                <i class="icon-finance-067 u-line-icon-pro"></i>
+              </span>
+            </router-link>
           </div>
           <!-- End Profile Picture -->
 
@@ -112,6 +116,10 @@ export default {
   created() {
     const user_id = this.sharedState.user_id
     this.getUser(user_id)
+    // tooltip
+    $(document).ready(function () {
+      $('[data-toggle="tooltip"]').tooltip();
+    })
   }
 }
 </script>

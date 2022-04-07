@@ -7,8 +7,8 @@
           <!-- 用户头像 -->
           <div v-if="user" class="text-center g-pos-rel g-mb-30">
             <div class="g-width-100 g-height-100 mx-auto mb-3">
-              <img class="img-fluid rounded-circle" v-bind:alt="user.name || user.username"
-                   v-bind:src="user._links.avatar">
+              <img class="img-fluid rounded-circle g-brd-around g-brd-gray-light-v4 g-pa-2"
+                   v-bind:alt="user.name || user.username" v-bind:src="user._links.avatar">
             </div>
 
             <span class="d-block g-font-weight-500">{{ user.name || user.username }}</span>
@@ -44,8 +44,18 @@
                 class="d-block align-middle u-link-v5 g-color-text g-color-primary--hover g-bg-gray-light-v5--hover rounded g-pa-3"
                 v-bind:active-class="'active g-color-primary--active g-bg-gray-light-v5--active'"
                 v-bind:to="{ name: 'CommentsResource' }">
-                <span class="u-icon-v1 g-color-gray-dark-v5 mr-2"><i class="icon-communication-057 u-line-icon-pro"></i></span>
+                <span class="u-icon-v1 g-color-gray-dark-v5 mr-2"><i
+                  class="icon-finance-206 u-line-icon-pro"></i></span>
                 Comments
+              </router-link>
+            </li>
+            <li class="g-py-3">
+              <router-link
+                class="d-block align-middle u-link-v5 g-color-text g-color-primary--hover g-bg-gray-light-v5--hover rounded g-pa-3"
+                v-bind:active-class="'active g-color-primary--active g-bg-gray-light-v5--active'"
+                v-bind:to="{ name: 'MessagesIndexResource' }">
+                <span class="u-icon-v1 g-color-gray-dark-v5 mr-2"><i class="icon-communication-154 u-line-icon-pro"></i></span>
+                Messages
               </router-link>
             </li>
           </ul>

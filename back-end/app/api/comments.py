@@ -24,11 +24,22 @@ def create_comment():
     comment.from_dict(data)
     comment.author = g.current_user
     comment.post = post
+    # 必须先添加该评论，后续给各用户发送通知时，User.new_recived_comments() 才能是更新后的值
     db.session.add(comment)
-    # 给文章作者发送新评论通知
-    post.author.add_notification('unread_recived_comments_count',
-                                 post.author.new_recived_comments())
-    db.session.commit()
+    db.session.commit()  # 更新数据库，添加评论记录
+    # 添加评论时:
+    # 1. 如果是一级评论，只需要给文章作者发送新评论通知
+    # 2. 如果不是一级评论，则需要给文章作者和该评论的所有祖先的作者发送新评论通知
+    users = set()
+    users.add(comment.post.author)  # 将文章作者添加进集合中
+    if comment.parent:
+        ancestors_authors = {c.author for c in comment.get_ancestors()}
+        users = users | ancestors_authors
+    # 给各用户发送新评论通知
+    for u in users:
+        u.add_notification('unread_recived_comments_count',
+                           u.new_recived_comments())
+    db.session.commit()  # 更新数据库，写入新通知
     response = jsonify(comment.to_dict())
     response.status_code = 201
     # HTTP协议要求201响应包含一个值为新资源URL的Location头部
@@ -82,11 +93,22 @@ def delete_comment(id):
     comment = Comment.query.get_or_404(id)
     if g.current_user != comment.author and g.current_user != comment.post.author:
         return error_response(403)
+    # 删除评论时:
+    # 1. 如果是一级评论，只需要给文章作者发送新评论通知
+    # 2. 如果不是一级评论，则需要给文章作者和该评论的所有祖先的作者发送新评论通知
+    users = set()
+    users.add(comment.post.author)  # 将文章作者添加进集合中
+    if comment.parent:
+        ancestors_authors = {c.author for c in comment.get_ancestors()}
+        users = users | ancestors_authors
+    # 必须先删除该评论，后续给各用户发送通知时，User.new_recived_comments() 才能是更新后的值
     db.session.delete(comment)
-    # 给文章作者发送新评论通知(需要自动减1)
-    comment.post.author.add_notification('unread_recived_comments_count',
-                                         comment.post.author.new_recived_comments())
-    db.session.commit()
+    db.session.commit()  # 更新数据库，删除评论记录
+    # 给各用户发送新评论通知
+    for u in users:
+        u.add_notification('unread_recived_comments_count',
+                           u.new_recived_comments())
+    db.session.commit()  # 更新数据库，写入新通知
     return '', 204
 
 
@@ -128,19 +150,4 @@ def unlike_comment(id):
     return jsonify({
         'status': 'success',
         'message': 'You are not liking comment [ id: %d ] anymore.' % id
-    })
-
-
-# 屏蔽评论
-@bp.route('/comments/<int:id>/disable', methods=['PUT'])
-@token_auth.login_required
-def disable_comment(id):
-    '''屏蔽评论'''
-    comment = Comment.query.get_or_404(id)
-    comment.disabled = True  # 屏蔽评论
-    db.session.add(comment)  # 提交数据库
-    db.session.commit()  # 提交数据库
-    return jsonify({
-        'status': 'success',
-        'message': 'You are now disabling comment [ id: %d ].' % id
     })

@@ -46,8 +46,8 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> Posts of {{ user.name || user.username }} <small
-          v-if="posts">(共 {{ posts._meta.total_items }} 篇, {{ posts._meta.total_pages }} 页)</small>
+          <i class="icon-bubbles g-pos-rel g-top-1 g-mr-5"></i> User Posts <small v-if="posts">(共
+          {{ posts._meta.total_items }} 篇, {{ posts._meta.total_pages }} 页)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
           <span aria-expanded="false" aria-haspopup="true"
@@ -55,10 +55,7 @@
             <i class="icon-options-vertical g-pos-rel g-top-1"></i>
           </span>
           <div class="dropdown-menu dropdown-menu-right rounded-0 g-mt-10">
-            <router-link class="dropdown-item g-px-10" v-bind:to="{ name: 'UserFollowingPosts' }">
-              <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> Posts of following
-            </router-link>
-            <div class="dropdown-divider"></div>
+
             <router-link class="dropdown-item g-px-10"
                          v-bind:to="{ path: $route.path, query: { page: 1, per_page: 1 }}">
               <i class="icon-plus g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 1 篇
@@ -71,10 +68,14 @@
                          v-bind:to="{ path: $route.path, query: { page: 1, per_page: 10 }}">
               <i class="icon-wallet g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 10 篇
             </router-link>
+
+            <div class="dropdown-divider"></div>
+
             <router-link class="dropdown-item g-px-10"
                          v-bind:to="{ path: $route.path, query: { page: 1, per_page: 20 }}">
               <i class="icon-fire g-font-size-12 g-color-gray-dark-v5 g-mr-5"></i> 每页 20 篇
             </router-link>
+
           </div>
         </div>
       </div>
@@ -106,6 +107,7 @@
 </template>
 
 <script>
+import store from '../../store'
 import Post from '../Base/Post'
 import Pagination from '../Base/Pagination'
 // bootstrap-markdown 编辑器依赖的 JS 文件，初始化编辑器在组件的 created() 方法中，同时它需要 JQuery 支持哦
@@ -122,7 +124,7 @@ export default {
   },
   data() {
     return {
-      user: '',
+      sharedState: store.state,
       posts: '',
       editPostForm: {
         title: '',
@@ -135,18 +137,6 @@ export default {
     }
   },
   methods: {
-    getUser(id) {
-      const path = `/api/users/${id}`
-      this.$axios.get(path)
-        .then((response) => {
-          // handle success
-          this.user = response.data
-        })
-        .catch((error) => {
-          // handle error
-          console.error(error)
-        })
-    },
     getUserPosts(id) {
       let page = 1
       let per_page = 5
@@ -219,7 +209,7 @@ export default {
       this.$axios.put(path, payload)
         .then((response) => {
           // handle success
-          this.getUserPosts(this.$route.params.id)
+          this.getUserPosts(this.$route.params.id || this.sharedState.user_id)
           this.$toasted.success('Successed update the post.', {icon: 'fingerprint'})
           this.editPostForm.title = '',
             this.editPostForm.summary = '',
@@ -257,7 +247,9 @@ export default {
             .then((response) => {
               // handle success
               this.$swal('Deleted', 'You successfully deleted this post', 'success')
-              this.getUserPosts(this.$route.params.id)
+              // 必须加个动态参数，不然路由没变化的话，User 组件不会重新执行 getUser()，就不会更新 Posts 计数
+              this.$router.push({path: this.$route.fullPath, query: {timestamp: Number(new Date())}})
+              // this.getUserPosts(this.$route.params.id || this.sharedState.user_id)
             })
             .catch((error) => {
               // handle error
@@ -271,8 +263,7 @@ export default {
     }
   },
   created() {
-    const user_id = this.$route.params.id
-    this.getUser(user_id)
+    const user_id = this.$route.params.id || this.sharedState.user_id
     this.getUserPosts(user_id)
     // 初始化 bootstrap-markdown 插件
     $(document).ready(function () {
@@ -284,20 +275,11 @@ export default {
       })
     })
   },
-  // 当路由变化后重新加载数据
+  // 当路由变化后(比如变更查询参数 page 和 per_page)重新加载数据
   beforeRouteUpdate(to, from, next) {
     next()
-    this.getUser(to.params.id)
-    this.getUserPosts(to.params.id)
-    // 初始化 bootstrap-markdown 插件
-    $(document).ready(function () {
-      $("#editPostFormBody").markdown({
-        autofocus: false,
-        savable: false,
-        iconlibrary: 'fa',  // 使用Font Awesome图标
-        language: 'zh'
-      })
-    })
+    const user_id = to.params.id || this.sharedState.user_id
+    this.getUserPosts(user_id)
   }
 }
 </script>

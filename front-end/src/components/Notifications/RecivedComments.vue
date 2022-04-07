@@ -15,7 +15,7 @@
     </form>
     <!-- End Add Comment Form -->
 
-    <!-- 博客文章的评论列表 -->
+    <!-- 用户收到的评论列表 -->
     <div class="card border-0 g-mb-15">
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
@@ -60,14 +60,18 @@
         <div v-for="(comment, index) in comments.items" v-bind:id="'c' + comment.id"
              v-bind:key="index" class="comment-item media g-brd-around g-brd-gray-light-v4 g-pa-30 g-mb-20">
           <router-link v-bind:to="{ path: `/user/${comment.author.id}` }">
-            <span class="d-inline-block g-pos-rel">
-              <span class="u-badge-v2--sm u-badge--top-left g-bg-red g-mt-7 g-ml-7"></span>
-              <img class="d-flex g-width-50 g-height-50 rounded-circle g-mt-3 g-mr-15"
-                   v-bind:alt="comment.author.name || comment.author.username" v-bind:src="comment.author.avatar">
+            <span v-if="comment.is_new" class="d-inline-block g-pos-rel">
+              <span class="u-badge-v2--xs u-badge--top-left g-bg-red g-mt-7 g-ml-7"></span>
+              <img
+                class="d-flex g-brd-around g-brd-gray-light-v3 g-pa-2 g-width-40 g-height-40 rounded-circle rounded mCS_img_loaded g-mt-3 g-mr-15"
+                v-bind:alt="comment.author.name || comment.author.username" v-bind:src="comment.author.avatar">
             </span>
+            <img v-else
+                 class="d-flex g-brd-around g-brd-gray-light-v3 g-pa-2 g-width-40 g-height-40 rounded-circle rounded mCS_img_loaded g-mt-3 g-mr-15"
+                 v-bind:alt="comment.author.name || comment.author.username" v-bind:src="comment.author.avatar">
           </router-link>
           <div class="media-body">
-            <div class="g-mb-15">
+            <div v-if="!comment.parent_id" class="g-mb-15">
               <h5 class="h5 g-color-gray-dark-v1 mb-0">
                 <router-link class="comment-author g-text-underline--none--hover"
                              v-bind:to="{ path: `/user/${comment.author.id}` }">
@@ -81,14 +85,28 @@
                   $moment(comment.timestamp).format('YYYY年MM月DD日 HH:mm:ss')
                 }}</span>
             </div>
+            <div v-else class="g-mb-15">
+              <h5 class="h5 g-color-gray-dark-v1 mb-0">
+                <router-link class="comment-author g-text-underline--none--hover"
+                             v-bind:to="{ path: `/user/${comment.author.id}` }">
+                  {{ comment.author.name || comment.author.username }}
+                </router-link>
+                <span class="h6">在文章<router-link class="g-text-underline--none--hover"
+                                                 v-bind:to="{ name: 'PostDetail', params: { id: comment.post.id } }">《{{
+                    comment.post.title
+                  }}》</router-link>中写了一条新评论</span></h5>
+              <span class="g-color-gray-dark-v4 g-font-size-12">{{
+                  $moment(comment.timestamp).format('YYYY年MM月DD日 HH:mm:ss')
+                }}</span>
+            </div>
 
             <div v-if="comment.disabled" class="g-color-red g-mb-15">此评论包含不良信息，已被禁止显示.</div>
             <div v-else>
               <!-- vue-markdown 开始解析markdown，它是子组件，通过 props 给它传值即可
               v-highlight 是自定义指令，用 highlight.js 语法高亮 -->
               <vue-markdown
-                v-highlight
                 :source="comment.body"
+                v-highlight
                 class="markdown-body g-mb-15">
               </vue-markdown>
             </div>
@@ -143,7 +161,7 @@
     </div>
 
     <!-- Pagination #04 -->
-    <div v-if="comments && comments._meta.total_pages > 1">
+    <div v-if="comments">
       <pagination
         v-bind:cur-page="comments._meta.page"
         v-bind:per-page="comments._meta.per_page"

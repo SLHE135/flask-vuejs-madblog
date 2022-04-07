@@ -246,8 +246,9 @@
               <div v-bind:id="'c' + comment.id"
                    class="comment-item media g-brd-around g-brd-gray-light-v4 g-pa-30 g-mb-20">
                 <router-link v-bind:to="{ path: `/user/${comment.author.id}` }">
-                  <img class="d-flex g-width-50 g-height-50 rounded-circle g-mt-3 g-mr-15"
-                       v-bind:alt="comment.author.name || comment.author.username" v-bind:src="comment.author.avatar">
+                  <img
+                    class="d-flex g-width-50 g-height-50 rounded-circle g-brd-around g-brd-gray-light-v4 g-pa-2 g-mt-3 g-mr-15"
+                    v-bind:alt="comment.author.name || comment.author.username" v-bind:src="comment.author.avatar">
                 </router-link>
                 <div class="media-body">
                   <div class="g-mb-15">
@@ -274,8 +275,8 @@
                     <!-- vue-markdown 开始解析markdown，它是子组件，通过 props 给它传值即可
                     v-highlight 是自定义指令，用 highlight.js 语法高亮 -->
                     <vue-markdown
-                      v-highlight
                       :source="comment.body"
+                      v-highlight
                       class="markdown-body g-mb-15">
                     </vue-markdown>
                   </div>
@@ -325,8 +326,9 @@
                    v-bind:id="'c' + child.id" v-bind:key="cindex"
                    class="g-ml-40 comment-item media g-brd-around g-brd-gray-light-v4 g-pa-30 g-mb-20">
                 <router-link v-bind:to="{ path: `/user/${child.author.id}` }">
-                  <img class="d-flex g-width-50 g-height-50 rounded-circle g-mt-3 g-mr-15"
-                       v-bind:alt="child.author.name || child.author.username" v-bind:src="child.author.avatar">
+                  <img
+                    class="d-flex g-width-50 g-height-50 rounded-circle g-brd-around g-brd-gray-light-v4 g-pa-2 g-mt-3 g-mr-15"
+                    v-bind:alt="child.author.name || child.author.username" v-bind:src="child.author.avatar">
                 </router-link>
                 <div class="media-body">
                   <div class="g-mb-15">
@@ -353,8 +355,8 @@
                     <!-- vue-markdown 开始解析markdown，它是子组件，通过 props 给它传值即可
                     v-highlight 是自定义指令，用 highlight.js 语法高亮 -->
                     <vue-markdown
-                      v-highlight
                       :source="child.body"
+                      v-highlight
                       class="markdown-body g-mb-15">
                     </vue-markdown>
                   </div>
@@ -437,8 +439,7 @@
 import store from '../store'
 // 导入 vue-markdown 组件解析 markdown 原文为　HTML
 import VueMarkdown from 'vue-markdown'
-// 评论子组件和分页子组件
-import Comment from './Base/Comment'
+// 分页子组件
 import Pagination from './Base/Pagination'
 // vue-router 从 Home 页路由到 Post 页后，会重新渲染并且会移除事件，自定义的指令 v-highlight 也不生效了
 // 所以，这个页面，在 mounted() 和 updated() 方法中调用 highlightCode() 可以解决代码不高亮问题
@@ -458,7 +459,6 @@ export default {
   name: 'Post',
   components: {
     VueMarkdown,
-    Comment,
     Pagination
   },
   data() {
@@ -823,7 +823,7 @@ export default {
       })
     },
     onDisabledComment(comment) {
-      const path = `/api/comments/${comment.id}/disable`
+      const path = `/api/comments/${comment.id}`
       this.$axios.put(path, {"disabled": true})
         .then((response) => {
           // handle success
