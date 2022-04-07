@@ -4,8 +4,8 @@
       <!-- Panel Header -->
       <div class="card-header d-flex align-items-center justify-content-between g-bg-gray-light-v5 border-0 g-mb-15">
         <h3 class="h6 mb-0">
-          <i class="icon-people g-pos-rel g-top-1 g-mr-5"></i> Followers of {{ user.name || user.username }} <small
-          v-if="followers">(共 {{ followers._meta.total_items }} 个, {{ followers._meta.total_pages }} 页)</small>
+          <i class="icon-people g-pos-rel g-top-1 g-mr-5"></i> Followeds of {{ user.name || user.username }} <small
+          v-if="followeds">(共 {{ followeds._meta.total_items }} 个, {{ followeds._meta.total_pages }} 页)</small>
         </h3>
         <div class="dropdown g-mb-10 g-mb-0--md">
           <span aria-expanded="false" aria-haspopup="true"
@@ -39,12 +39,12 @@
       <!-- End Panel Header -->
 
       <!-- Panel Body -->
-      <div v-if="followers" class="card-block g-pa-0">
+      <div v-if="followeds" class="card-block g-pa-0">
 
-        <member v-for="(follower, index) in followers.items" v-bind:key="index"
-                v-bind:member="follower"
-                v-on:follow-user="onFollowUser(follower)"
-                v-on:unfollow-user="onUnfollowUser(follower)">
+        <member v-for="(followed, index) in followeds.items" v-bind:key="index"
+                v-bind:member="followed"
+                v-on:follow-user="onFollowUser(followed)"
+                v-on:unfollow-user="onUnfollowUser(followed)">
         </member>
 
       </div>
@@ -52,11 +52,11 @@
     </div>
 
     <!-- Pagination #04 -->
-    <div v-if="followers">
+    <div v-if="followeds">
       <pagination
-        v-bind:cur-page="followers._meta.page"
-        v-bind:per-page="followers._meta.per_page"
-        v-bind:total-pages="followers._meta.total_pages">
+        v-bind:cur-page="followeds._meta.page"
+        v-bind:per-page="followeds._meta.per_page"
+        v-bind:total-pages="followeds._meta.total_pages">
       </pagination>
     </div>
     <!-- End Pagination #04 -->
@@ -68,7 +68,7 @@ import Member from '../Base/Member'
 import Pagination from '../Base/Pagination'
 
 export default {
-  name: 'Followers',  //this is the name of the component
+  name: 'Following',  //this is the name of the component
   components: {
     Member,
     Pagination
@@ -76,7 +76,7 @@ export default {
   data() {
     return {
       user: '',
-      followers: ''
+      followeds: ''
     }
   },
   methods: {
@@ -92,7 +92,7 @@ export default {
           console.error(error)
         })
     },
-    getUserFollowers(id) {
+    getUserFolloweds(id) {
       let page = 1
       let per_page = 5
       if (typeof this.$route.query.page != 'undefined') {
@@ -103,35 +103,37 @@ export default {
         per_page = this.$route.query.per_page
       }
 
-      const path = `/api/users/${id}/followers/?page=${page}&per_page=${per_page}`
+      const path = `/api/users/${id}/followeds/?page=${page}&per_page=${per_page}`
       this.$axios.get(path)
         .then((response) => {
           // handle success
-          this.followers = response.data
+          this.followeds = response.data
         })
         .catch((error) => {
           // handle error
           console.error(error)
         })
     },
-    onFollowUser(follower) {
-      const path = `/api/follow/${follower.id}`
+    onFollowUser(followed) {
+      const path = `/api/follow/${followed.id}`
       this.$axios.get(path)
         .then((response) => {
           // handle success
-          this.getUserFollowers(this.$route.params.id)
+          this.$toasted.success(response.data.message, {icon: 'fingerprint'})
+          this.getUserFolloweds(this.$route.params.id)
         })
         .catch((error) => {
           // handle error
           console.error(error)
         })
     },
-    onUnfollowUser(follower) {
-      const path = `/api/unfollow/${follower.id}`
+    onUnfollowUser(followed) {
+      const path = `/api/unfollow/${followed.id}`
       this.$axios.get(path)
         .then((response) => {
           // handle success
-          this.getUserFollowers(this.$route.params.id)
+          this.$toasted.success(response.data.message, {icon: 'fingerprint'})
+          this.getUserFolloweds(this.$route.params.id)
         })
         .catch((error) => {
           // handle error
@@ -142,13 +144,13 @@ export default {
   created() {
     const user_id = this.$route.params.id
     this.getUser(user_id)
-    this.getUserFollowers(user_id)
+    this.getUserFolloweds(user_id)
   },
   // 进入子路由后重新加载数据
   beforeRouteUpdate(to, from, next) {
     next()
     this.getUser(to.params.id)
-    this.getUserFollowers(to.params.id)
+    this.getUserFolloweds(to.params.id)
   }
 }
 </script>

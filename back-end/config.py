@@ -14,3 +14,5 @@ class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'you-will-never-guess'  # 密钥
     POSTS_PER_PAGE = 10  # 每页显示的文章数量
     USERS_PER_PAGE = 10  # 每页显示的用户数量
+    COMMENTS_PER_PAGE = 10  # 每页显示的评论数量
+    MESSAGES_PER_PAGE = 10  # 每页显示的消息数量

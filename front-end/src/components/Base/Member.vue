@@ -1,0 +1,45 @@
+<template>
+  <div>
+    <div class="d-flex justify-content-start g-brd-around g-brd-gray-light-v4 g-brd-left-1 g-pa-20 g-mb-10">
+      <div class="g-mt-2">
+        <router-link v-bind:to="{ path: `/user/${member.id}` }">
+          <img class="g-width-50 g-height-50 rounded-circle mCS_img_loaded" v-bind:alt="member.name || member.username"
+               v-bind:src="member._links.avatar">
+        </router-link>
+      </div>
+      <div class="align-self-center g-px-10">
+        <h5 class="h5 g-color-gray-dark-v1 mb-0">
+          <router-link class="g-text-underline--none--hover" v-bind:to="{ path: `/user/${member.id}` }">
+            <span class="g-mr-5">{{ member.name || member.username }}</span>
+          </router-link>
+          <small class="g-font-size-12 g-color-deeporange">{{ member.followers_count }} followers</small>, <small
+          class="g-font-size-12 g-color-aqua">{{ member.followeds_count }} following </small>
+        </h5>
+        <p class="m-0">Follow Since: {{ $moment(member.timestamp).format('YYYY年MM月DD日 HH:mm:ss') }}</p>
+      </div>
+      <div class="align-self-center ml-auto">
+        <button v-if="member.is_following" class="btn btn-block u-btn-outline-red g-rounded-20 g-px-10"
+                v-on:click="$emit('unfollow-user')">Unfollow
+        </button>
+        <button v-if="!member.is_following && member.id != sharedState.user_id"
+                class="btn btn-block u-btn-outline-primary g-rounded-20 g-px-10" v-on:click="$emit('follow-user')">
+          Follow
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import store from '../../store'
+
+export default {
+  name: 'Member',  //this is the name of the component
+  props: ['member'],
+  data() {
+    return {
+      sharedState: store.state
+    }
+  }
+}
+</script>

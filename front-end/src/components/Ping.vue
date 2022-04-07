@@ -7,6 +7,12 @@
     </alert>
 
     <button class="btn btn-primary" type="button">{{ msg }}</button>
+
+    <span class="d-inline-block g-pos-rel g-mr-20 g-mb-20">
+      <span class="u-badge-v2--xs u-badge--top-left g-bg-red g-mt-7 g-ml-7"></span>
+      <img alt="Image Description" class="media-object g-rounded-50x u-image-icon-size-md"
+           src="http://www.madmalls.com/static/main/images/avatar.jpg">
+    </span>
   </div>
 </template>
 
