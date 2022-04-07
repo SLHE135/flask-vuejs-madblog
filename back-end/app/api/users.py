@@ -7,7 +7,7 @@ from app.api import bp
 from app.api.auth import token_auth
 from app.api.errors import bad_request, error_response
 from app.extensions import db
-from app.models import User, Post, Comment
+from app.models import User, Post, Comment, Notification
 
 
 @bp.route('/users/', methods=['POST'])
@@ -265,4 +265,37 @@ def get_user_recived_comments(id):
         Comment.query.filter(Comment.post_id.in_(user_posts_ids), Comment.author != g.current_user)
             .order_by(Comment.mark_read, Comment.timestamp.desc()),
         page, per_page, 'api.get_user_recived_comments', id=id)
+    # 标记哪些评论是新的
+    last_read_time = user.last_recived_comments_read_time or datetime(1900, 1, 1)
+    for item in data['items']:
+        if item['timestamp'] > last_read_time:
+            item['is_new'] = True
+    # 需要考虑分页的问题，比如新评论有25条，默认分页是每页10条，
+    # 如果用户请求第一页时就更新 last_recived_comments_read_time，那么后15条就被认为不是新评论了，这是不对的
+    if data['_meta']['page'] * data['_meta']['per_page'] >= user.new_recived_comments():
+        # 更新 last_recived_comments_read_time 属性值
+        user.last_recived_comments_read_time = datetime.utcnow()
+        # 将新评论通知的计数归零
+        user.add_notification('unread_recived_comments_count', 0)
+    else:
+        # 用户剩余未查看的新评论数
+        n = user.new_recived_comments() - data['_meta']['page'] * data['_meta']['per_page']
+        # 将新评论通知的计数更新为未读数
+        user.add_notification('unread_recived_comments_count', n)
+    db.session.commit()
     return jsonify(data)
+
+
+@bp.route('/users/<int:id>/notifications/', methods=['GET'])
+@token_auth.login_required
+def get_user_notifications(id):
+    '''返回该用户的新通知'''
+    user = User.query.get_or_404(id)
+    if g.current_user != user:
+        return error_response(403)
+    # 只返回上次看到的通知以来发生的新通知
+    # 比如用户在 10:00:00 请求一次该API，在 10:00:10 再次请求该API只会返回 10:00:00 之后产生的新通知
+    since = request.args.get('since', 0.0, type=float)
+    notifications = user.notifications.filter(
+        Notification.timestamp > since).order_by(Notification.timestamp.asc())
+    return jsonify([n.to_dict() for n in notifications])

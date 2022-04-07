@@ -1,6 +1,8 @@
 import base64
+import json
 from datetime import datetime, timedelta
 from hashlib import md5
+from time import time
 
 import jwt
 from flask import url_for, current_app
@@ -78,6 +80,18 @@ class User(PaginatedAPIMixin, db.Model):
     # 用户发表的评论列表
     comments = db.relationship('Comment', backref='author', lazy='dynamic',
                                cascade='all, delete-orphan')
+    # 用户最后一次查看 收到的评论 页面的时间，用来判断哪些收到的评论是新的
+    last_recived_comments_read_time = db.Column(db.DateTime)
+    # 用户的通知
+    notifications = db.relationship('Notification', backref='user',
+                                    lazy='dynamic', cascade='all, delete-orphan')
+
+    # 用户最后一次查看 用户的粉丝 页面的时间，用来判断哪些粉丝是新的
+    last_follows_read_time = db.Column(db.DateTime)
+    # 用户最后一次查看 收到的点赞 页面的时间，用来判断哪些点赞是新的
+    last_likes_read_time = db.Column(db.DateTime)
+    # 用户最后一次查看 关注的人的博客 页面的时间，用来判断哪些文章是新的
+    last_followeds_posts_read_time = db.Column(db.DateTime)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -91,7 +105,7 @@ class User(PaginatedAPIMixin, db.Model):
     def avatar(self, size):
         '''头像'''
         digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-        return 'https://www.gravatar.com/avatar/{}?d=identicon&s={}'.format(digest, size)
+        return 'https://cdn.v2ex.com/gravatar/{}?d=identicon&s={}'.format(digest, size)
 
     def to_dict(self, include_email=False):
         data = {
@@ -186,6 +200,54 @@ class User(PaginatedAPIMixin, db.Model):
         # own = Post.query.filter_by(user_id=self.id)
         # return followed.union(own).order_by(Post.timestamp.desc())
         return followed.order_by(Post.timestamp.desc())
+
+    def new_recived_comments(self):
+        '''用户发布的文章下面收到的新评论计数'''
+        last_read_time = self.last_recived_comments_read_time or datetime(1900, 1, 1)  # 如果没有记录，则设置为1900-01-01
+        # 用户发布的所有文章
+        user_posts_ids = [post.id for post in self.posts.all()]
+        # 用户收到的所有评论，即评论的 post_id 在 user_posts_ids 集合中，且评论的 author 不是当前用户（即文章的作者）
+        recived_comments = Comment.query.filter(Comment.post_id.in_(user_posts_ids), Comment.author != self).order_by(
+            Comment.mark_read, Comment.timestamp.desc())
+        # 新评论
+        return recived_comments.filter(Comment.timestamp > last_read_time).count()
+
+    def add_notification(self, name, data):
+        '''给用户实例对象增加通知'''
+        # 如果具有相同名称的通知已存在，则先删除该通知
+        self.notifications.filter_by(name=name).delete()
+        # 为用户添加通知，写入数据库
+        n = Notification(name=name, payload_json=json.dumps(data), user=self)
+        db.session.add(n)
+        return n
+
+    def new_follows(self):
+        '''用户的新粉丝计数'''
+        last_read_time = self.last_follows_read_time or datetime(1900, 1, 1)
+        return self.followers.filter(followers.c.timestamp > last_read_time).count()
+
+    def new_likes(self):
+        '''用户收到的新点赞计数'''
+        last_read_time = self.last_likes_read_time or datetime(1900, 1, 1)
+        # 当前用户发表的所有评论当中，哪些被点赞了
+        comments = self.comments.join(comments_likes).all()
+        # 新的点赞记录计数
+        new_likes_count = 0
+        for c in comments:
+            # 获取点赞时间
+            for u in c.likers:
+                res = db.engine.execute(
+                    "select * from comments_likes where user_id={} and comment_id={}".format(u.id, c.id))
+                timestamp = datetime.strptime(list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
+                # 判断本条点赞记录是否为新的
+                if timestamp > last_read_time:
+                    new_likes_count += 1
+        return new_likes_count
+
+    def new_followeds_posts(self):
+        '''用户关注的人的新发布的文章计数'''
+        last_read_time = self.last_followeds_posts_read_time or datetime(1900, 1, 1)
+        return self.followeds_posts().filter(Post.timestamp > last_read_time).count()
 
 
 class Post(PaginatedAPIMixin, db.Model):
@@ -330,3 +392,42 @@ class Comment(PaginatedAPIMixin, db.Model):
         '''取消点赞'''
         if self.is_liked_by(user):
             self.likers.remove(user)
+
+
+class Notification(db.Model):
+    __tablename__ = 'notifications'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    timestamp = db.Column(db.Float, index=True, default=time)
+    payload_json = db.Column(db.Text)
+
+    def __repr__(self):
+        return '<Notification {}>'.format(self.id)
+
+    def get_data(self):
+        return json.loads(str(self.payload_json))
+
+    def to_dict(self):
+        data = {
+            'id': self.id,
+            'name': self.name,
+            'timestamp': self.timestamp,
+            'payload': self.get_data(),
+            'user': {
+                'id': self.user_id,
+                'username': self.user.username,
+                'name': self.user.name,
+                'avatar': self.user.avatar(128)
+            },
+            '_links': {
+                'self': url_for('api.get_notification', id=self.id),
+                'user_url': url_for('api.get_user', id=self.user_id),
+            }
+        }
+        return data
+
+    def from_dict(self, data):
+        for field in ['body', 'timestamp']:
+            if field in data:
+                setattr(self, field, data[field])
