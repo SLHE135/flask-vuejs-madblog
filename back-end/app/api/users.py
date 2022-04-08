@@ -8,12 +8,13 @@ from app.api import bp
 from app.api.auth import token_auth
 from app.api.errors import bad_request, error_response
 from app.extensions import db
-from app.models import comments_likes, User, Post, Comment, Notification, Message
+from app.models import comments_likes, User, Post, Comment, Notification, Message, posts_likes
 
 
+# 注册一个新用户
 @bp.route('/users/', methods=['POST'])
 def create_user():
-    '''注册一个新用户'''
+    """注册一个新用户"""
     data = request.get_json()
     if not data:
         return bad_request('You must post JSON data.')
@@ -45,10 +46,11 @@ def create_user():
     return response
 
 
+# 返回用户集合，分页
 @bp.route('/users/', methods=['GET'])
 @token_auth.login_required
 def get_users():
-    '''返回用户集合，分页'''
+    """返回用户集合，分页"""
     page = request.args.get('page', 1, type=int)
     per_page = min(
         request.args.get(
@@ -57,10 +59,11 @@ def get_users():
     return jsonify(data)
 
 
+# 返回一个用户
 @bp.route('/users/<int:id>', methods=['GET'])
 @token_auth.login_required
 def get_user(id):
-    '''返回一个用户'''
+    """返回一个用户"""
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return jsonify(user.to_dict(include_email=True))
@@ -70,10 +73,11 @@ def get_user(id):
     return jsonify(data)
 
 
+# 修改一个用户
 @bp.route('/users/<int:id>', methods=['PUT'])
 @token_auth.login_required
 def update_user(id):
-    '''修改一个用户'''
+    """修改一个用户"""
     user = User.query.get_or_404(id)
     data = request.get_json()
     if not data:
@@ -102,10 +106,11 @@ def update_user(id):
     return jsonify(user.to_dict())
 
 
+# 删除一个用户
 @bp.route('/users/<int:id>', methods=['DELETE'])
 @token_auth.login_required
 def delete_user(id):
-    '''删除一个用户'''
+    """删除一个用户"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -114,13 +119,11 @@ def delete_user(id):
     return '', 204
 
 
-###
-# 关注 / 取消关注
-###
+# 开始关注一个用户
 @bp.route('/follow/<int:id>', methods=['GET'])
 @token_auth.login_required
 def follow(id):
-    '''开始关注一个用户'''
+    """开始关注一个用户"""
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return bad_request('You cannot follow yourself.')
@@ -136,10 +139,11 @@ def follow(id):
     })
 
 
+# 取消关注一个用户
 @bp.route('/unfollow/<int:id>', methods=['GET'])
 @token_auth.login_required
 def unfollow(id):
-    '''取消关注一个用户'''
+    """取消关注一个用户"""
     user = User.query.get_or_404(id)
     if g.current_user == user:
         return bad_request('You cannot unfollow yourself.')
@@ -155,13 +159,11 @@ def unfollow(id):
     })
 
 
-###
-# 用户关注了谁、用户的粉丝
-###
+# 返回用户已关注的人的列表
 @bp.route('/users/<int:id>/followeds/', methods=['GET'])
 @token_auth.login_required
 def get_followeds(id):
-    '''返回用户已关注的人的列表'''
+    """返回用户已关注的人的列表"""
     user = User.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -184,10 +186,11 @@ def get_followeds(id):
     return jsonify(data)
 
 
+# 返回用户的粉丝列表
 @bp.route('/users/<int:id>/followers/', methods=['GET'])
 @token_auth.login_required
 def get_followers(id):
-    '''返回用户的粉丝列表'''
+    """返回用户的粉丝列表"""
     user = User.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -226,7 +229,7 @@ def get_followers(id):
 @bp.route('/users/<int:id>/posts/', methods=['GET'])
 @token_auth.login_required
 def get_user_posts(id):
-    '''返回该用户的所有博客文章列表'''
+    """返回该用户的所有博客文章列表"""
     user = User.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -238,10 +241,11 @@ def get_user_posts(id):
     return jsonify(data)
 
 
+# 返回该用户所关注的大神的所有博客文章列表
 @bp.route('/users/<int:id>/followeds-posts/', methods=['GET'])
 @token_auth.login_required
 def get_user_followeds_posts(id):
-    '''返回该用户所关注的大神的所有博客文章列表'''
+    """返回该用户所关注的大神的所有博客文章列表"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -265,10 +269,11 @@ def get_user_followeds_posts(id):
     return jsonify(data)
 
 
+# 返回该用户发表过的所有评论列表
 @bp.route('/users/<int:id>/comments/', methods=['GET'])
 @token_auth.login_required
 def get_user_comments(id):
-    '''返回该用户发表过的所有评论列表'''
+    """返回该用户发表过的所有评论列表"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -282,10 +287,11 @@ def get_user_comments(id):
     return jsonify(data)
 
 
+# 返回该用户收到的所有评论
 @bp.route('/users/<int:id>/recived-comments/', methods=['GET'])
 @token_auth.login_required
 def get_user_recived_comments(id):
-    '''返回该用户收到的所有评论'''
+    """返回该用户收到的所有评论"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -321,10 +327,11 @@ def get_user_recived_comments(id):
     return jsonify(data)
 
 
-@bp.route('/users/<int:id>/recived-likes/', methods=['GET'])
+# 返回该用户收到的赞和喜欢
+@bp.route('/users/<int:id>/recived-comments-likes/', methods=['GET'])
 @token_auth.login_required
-def get_user_recived_likes(id):
-    '''返回该用户收到的赞和喜欢'''
+def get_user_recived_comments_likes(id):
+    """返回该用户收到的赞和喜欢"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -344,10 +351,10 @@ def get_user_recived_likes(id):
             'total_items': comments.total
         },
         '_links': {
-            'self': url_for('api.get_user_recived_likes', page=page, per_page=per_page, id=id),
-            'next': url_for('api.get_user_recived_likes', page=page + 1, per_page=per_page,
+            'self': url_for('api.get_user_recived_comments_likes', page=page, per_page=per_page, id=id),
+            'next': url_for('api.get_user_recived_comments_likes', page=page + 1, per_page=per_page,
                             id=id) if comments.has_next else None,
-            'prev': url_for('api.get_user_recived_likes', page=page - 1, per_page=per_page,
+            'prev': url_for('api.get_user_recived_comments_likes', page=page - 1, per_page=per_page,
                             id=id) if comments.has_prev else None
         }
     }
@@ -372,16 +379,17 @@ def get_user_recived_likes(id):
     # 更新 last_likes_read_time 属性值
     user.last_likes_read_time = datetime.utcnow()
     # 将新点赞通知的计数归零
-    user.add_notification('unread_likes_count', 0)
+    user.add_notification('unread_comments_likes_count', 0)
     db.session.commit()
     return jsonify(records)
 
 
+# 我给哪些用户发过私信，按用户分组，返回我给各用户最后一次发送的私信即: 我给 (谁) 最后一次 发了 (什么私信)
 @bp.route('/users/<int:id>/messages-recipients/', methods=['GET'])
 @token_auth.login_required
 def get_user_messages_recipients(id):
-    '''我给哪些用户发过私信，按用户分组，返回我给各用户最后一次发送的私信
-    即: 我给 (谁) 最后一次 发了 (什么私信)'''
+    """我给哪些用户发过私信，按用户分组，返回我给各用户最后一次发送的私信
+    即: 我给 (谁) 最后一次 发了 (什么私信)"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -409,11 +417,12 @@ def get_user_messages_recipients(id):
     return jsonify(data)
 
 
+# 哪些用户给我发过私信，按用户分组，返回各用户最后一次发送的私信即: (谁) 最后一次 给我发了 (什么私信)
 @bp.route('/users/<int:id>/messages-senders/', methods=['GET'])
 @token_auth.login_required
 def get_user_messages_senders(id):
-    '''哪些用户给我发过私信，按用户分组，返回各用户最后一次发送的私信
-    即: (谁) 最后一次 给我发了 (什么私信)'''
+    """哪些用户给我发过私信，按用户分组，返回各用户最后一次发送的私信
+    即: (谁) 最后一次 给我发了 (什么私信)"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -448,10 +457,11 @@ def get_user_messages_senders(id):
     return jsonify(data)
 
 
+# 返回我与某个用户(由查询参数 from 获取)之间的所有私信记录
 @bp.route('/users/<int:id>/history-messages/', methods=['GET'])
 @token_auth.login_required
 def get_user_history_messages(id):
-    '''返回我与某个用户(由查询参数 from 获取)之间的所有私信记录'''
+    """返回我与某个用户(由查询参数 from 获取)之间的所有私信记录"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -494,10 +504,11 @@ def get_user_history_messages(id):
     return jsonify(data)
 
 
+# 返回该用户的新通知
 @bp.route('/users/<int:id>/notifications/', methods=['GET'])
 @token_auth.login_required
 def get_user_notifications(id):
-    '''返回该用户的新通知'''
+    """返回该用户的新通知"""
     user = User.query.get_or_404(id)
     if g.current_user != user:
         return error_response(403)
@@ -543,3 +554,75 @@ def unblock(id):
         'status': 'success',
         'message': 'You are not blocking %s anymore.' % (user.name if user.name else user.username)
     })
+
+
+# 返回该用户收到的文章喜欢
+@bp.route('/users/<int:id>/recived-posts-likes/', methods=['GET'])
+@token_auth.login_required
+def get_user_recived_posts_likes(id):
+    """返回该用户收到的文章喜欢"""
+    user = User.query.get_or_404(id)
+    if g.current_user != user:
+        return error_response(403)
+    page = request.args.get('page', 1, type=int)
+    per_page = min(
+        request.args.get(
+            'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 100)
+    # 用户哪些文章被喜欢/收藏了，分页
+    posts = user.posts.join(posts_likes).paginate(page, per_page)
+    # 喜欢记录
+    records = {
+        'items': [],
+        '_meta': {
+            'page': page,
+            'per_page': per_page,
+            'total_pages': posts.pages,
+            'total_items': posts.total
+        },
+        '_links': {
+            'self': url_for('api.get_user_recived_posts_likes', page=page, per_page=per_page, id=id),
+            'next': url_for('api.get_user_recived_posts_likes', page=page + 1, per_page=per_page,
+                            id=id) if posts.has_next else None,
+            'prev': url_for('api.get_user_recived_posts_likes', page=page - 1, per_page=per_page,
+                            id=id) if posts.has_prev else None
+        }
+    }
+    for p in posts.items:
+        # 重组数据，变成: (谁) (什么时间) 喜欢了你的 (哪篇文章)
+        for u in p.likers:
+            if u != user:  # 用户自己喜欢自己的文章不需要被通知
+                data = {}
+                data['user'] = u.to_dict()
+                data['post'] = p.to_dict()
+                # 获取喜欢时间
+                res = db.engine.execute("select * from posts_likes where user_id={} and post_id={}".format(u.id, p.id))
+                data['timestamp'] = datetime.strptime(list(res)[0][2], '%Y-%m-%d %H:%M:%S.%f')
+                # 标记本条喜欢记录是否为新的
+                last_read_time = user.last_posts_likes_read_time or datetime(1900, 1, 1)
+                if data['timestamp'] > last_read_time:
+                    data['is_new'] = True
+                records['items'].append(data)
+    # 按 timestamp 排序一个字典列表(倒序，最新喜欢的人在最前面)
+    records['items'] = sorted(records['items'], key=itemgetter('timestamp'), reverse=True)
+    # 更新 last_posts_likes_read_time 属性值
+    user.last_posts_likes_read_time = datetime.utcnow()
+    # 将新喜欢通知的计数归零
+    user.add_notification('unread_posts_likes_count', 0)
+    db.session.commit()
+    return jsonify(records)
+
+
+# 返回该用户喜欢别人的文章列表
+@bp.route('/users/<int:id>/liked-posts/', methods=['GET'])
+@token_auth.login_required
+def get_user_liked_posts(id):
+    """返回该用户喜欢别人的文章列表"""
+    user = User.query.get_or_404(id)
+    page = request.args.get('page', 1, type=int)
+    per_page = min(
+        request.args.get(
+            'per_page', current_app.config['POSTS_PER_PAGE'], type=int), 100)
+    data = Post.to_collection_dict(
+        user.liked_posts.order_by(Post.timestamp.desc()), page, per_page,
+        'api.get_user_liked_posts', id=id)
+    return jsonify(data)

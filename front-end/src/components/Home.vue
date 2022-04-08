@@ -131,7 +131,6 @@ import '../assets/bootstrap-markdown/js/bootstrap-markdown.js'
 import '../assets/bootstrap-markdown/js/bootstrap-markdown.zh.js'
 import '../assets/bootstrap-markdown/js/marked.js'
 
-
 export default {
   name: 'Home',  //this is the name of the component
   components: {
@@ -167,7 +166,6 @@ export default {
       if (typeof this.$route.query.page != 'undefined') {
         page = this.$route.query.page
       }
-
       if (typeof this.$route.query.per_page != 'undefined') {
         per_page = this.$route.query.per_page
       }
@@ -186,14 +184,12 @@ export default {
     },
     onSubmitAddPost(e) {
       this.postForm.errors = 0  // 重置
-
       if (!this.postForm.title) {
         this.postForm.errors++
         this.postForm.titleError = 'Title is required.'
       } else {
         this.postForm.titleError = null
       }
-
       if (!this.postForm.body) {
         this.postForm.errors++
         this.postForm.bodyError = 'Body is required.'
@@ -203,12 +199,10 @@ export default {
         this.postForm.bodyError = null
         $('#addPostForm .md-editor').closest('.form-group').removeClass('u-has-error-v1')
       }
-
       if (this.postForm.errors > 0) {
         // 表单验证没通过时，不继续往下执行，即不会通过 axios 调用后端API
         return false
       }
-
       const path = '/api/posts'
       const payload = {
         title: this.postForm.title,
@@ -241,7 +235,6 @@ export default {
       // 每次提交前先移除错误，不然错误就会累加
       $('#editPostForm .form-control-feedback').remove()
       $('#editPostForm .form-group.u-has-error-v1').removeClass('u-has-error-v1')
-
       if (!this.editPostForm.title) {
         this.editPostForm.errors++
         this.editPostForm.titleError = 'Title is required.'
@@ -251,7 +244,6 @@ export default {
       } else {
         this.editPostForm.titleError = null
       }
-
       if (!this.editPostForm.body) {
         this.editPostForm.errors++
         this.editPostForm.bodyError = 'Body is required.'
@@ -262,15 +254,12 @@ export default {
       } else {
         this.editPostForm.bodyError = null
       }
-
       if (this.editPostForm.errors > 0) {
         // 表单验证没通过时，不继续往下执行，即不会通过 axios 调用后端API
         return false
       }
-
       // 先隐藏 Modal
       $('#editPostModal').modal('hide')
-
       const path = `/api/posts/${this.editPostForm.id}`
       const payload = {
         title: this.editPostForm.title,

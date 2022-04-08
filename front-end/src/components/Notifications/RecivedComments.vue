@@ -113,15 +113,15 @@
 
             <ul class="list-inline d-sm-flex my-0">
               <li v-if="!comment.disabled" class="list-inline-item g-mr-20">
-                <a class="comment-reply-link u-link-v5 g-color-gray-dark-v4 g-color-primary--hover" href="javascript:;"
-                   v-on:click="onClickReply(comment)">
+                <a class="comment-reply-link u-link-v5 g-color-gray-dark-v4 g-color-primary--hover"
+                   href="javascript:;" v-on:click="onClickReply(comment)">
                   <i class="icon-note g-pos-rel g-top-1 g-mr-3"></i>
                   回复
                 </a>
               </li>
               <li class="list-inline-item g-mr-20">
-                <router-link class="u-link-v5 g-color-gray-dark-v4 g-color-primary--hover" href="javascript:;"
-                             v-bind:to="{ path: `/post/${comment.post.id}#c${comment.id}` }">
+                <router-link class="u-link-v5 g-color-gray-dark-v4 g-color-primary--hover"
+                             href="javascript:;" v-bind:to="{ path: `/post/${comment.post.id}#c${comment.id}` }">
                   <i class="icon-action-redo g-pos-rel g-top-1 g-mr-3"></i>
                   查看对话
                 </router-link>
@@ -210,7 +210,6 @@ export default {
       if (typeof this.$route.query.page != 'undefined') {
         page = this.$route.query.page
       }
-
       if (typeof this.$route.query.per_page != 'undefined') {
         per_page = this.$route.query.per_page
       }
@@ -234,7 +233,6 @@ export default {
     },
     onSubmitReply() {
       this.replyCommentForm.errors = 0  // 重置
-
       if (!this.replyCommentForm.body) {
         this.replyCommentForm.errors++
         this.replyCommentForm.bodyError = 'Body is required.'
@@ -244,7 +242,6 @@ export default {
         this.replyCommentForm.bodyError = null
         $('#replyCommentForm .md-editor').closest('.form-group').removeClass('u-has-error-v1')
       }
-
       if (this.replyCommentForm.errors > 0) {
         // 表单验证没通过时，不继续往下执行，即不会通过 axios 调用后端API
         return false

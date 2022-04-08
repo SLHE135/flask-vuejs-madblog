@@ -6,6 +6,7 @@ from app.api.errors import error_response
 from app.models import Notification
 
 
+# 返回一个用户通知
 @bp.route('/notifications/<int:id>', methods=['GET'])
 @token_auth.login_required
 def get_notification(id):

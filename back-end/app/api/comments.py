@@ -7,6 +7,7 @@ from app.extensions import db
 from app.models import Post, Comment
 
 
+# 在某篇博客文章下面发表新评论
 @bp.route('/comments/', methods=['POST'])
 @token_auth.login_required
 def create_comment():
@@ -47,6 +48,7 @@ def create_comment():
     return response
 
 
+# 返回评论集合，分页
 @bp.route('/comments/', methods=['GET'])
 @token_auth.login_required
 def get_comments():
@@ -61,6 +63,7 @@ def get_comments():
     return jsonify(data)
 
 
+# 返回单个评论
 @bp.route('/comments/<int:id>', methods=['GET'])
 @token_auth.login_required
 def get_comment(id):
@@ -69,6 +72,7 @@ def get_comment(id):
     return jsonify(comment.to_dict())
 
 
+# 修改单个评论
 @bp.route('/comments/<int:id>', methods=['PUT'])
 @token_auth.login_required
 def update_comment(id):
@@ -86,6 +90,7 @@ def update_comment(id):
     return jsonify(comment.to_dict())
 
 
+# 删除单个评论
 @bp.route('/comments/<int:id>', methods=['DELETE'])
 @token_auth.login_required
 def delete_comment(id):
@@ -112,9 +117,7 @@ def delete_comment(id):
     return '', 204
 
 
-###
-# 评论被点赞或被取消点赞
-###
+# 点赞评论
 @bp.route('/comments/<int:id>/like', methods=['GET'])
 @token_auth.login_required
 def like_comment(id):
@@ -134,6 +137,7 @@ def like_comment(id):
     })
 
 
+# 取消点赞评论
 @bp.route('/comments/<int:id>/unlike', methods=['GET'])
 @token_auth.login_required
 def unlike_comment(id):
@@ -151,3 +155,6 @@ def unlike_comment(id):
         'status': 'success',
         'message': 'You are not liking comment [ id: %d ] anymore.' % id
     })
+
+# 返回评论收到的赞
+# @bp.route('')
