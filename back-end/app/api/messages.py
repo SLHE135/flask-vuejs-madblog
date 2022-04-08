@@ -20,6 +20,8 @@ def create_message():
         return bad_request('Recipient id is required.')
 
     user = User.query.get_or_404(int(data.get('recipient_id')))
+    if user.is_blocking(g.current_user):
+        return bad_request('You are in the blacklist of {}'.format(user.name if user.name else user.username))
     if g.current_user == user:
         return bad_request('You cannot send private message to yourself.')
     message = Message()

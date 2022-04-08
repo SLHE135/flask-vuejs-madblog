@@ -429,6 +429,9 @@ def get_user_messages_senders(id):
     new_items = []  # 最后一条是新的
     not_new_items = []  # 最后一条不是新的
     for item in data['items']:
+        # 判断我是否拉黑其他用户
+        if user.is_blocking(User.query.get(item['sender']['id'])):
+            item['is_blocking'] = True
         # item 是他发的最后一条，如果最后一条不是新的，肯定就没有啦
         if item['timestamp'] > last_read_time:
             item['is_new'] = True
@@ -438,6 +441,7 @@ def get_user_messages_senders(id):
             new_items.append(item)
         else:
             not_new_items.append(item)
+
     # 对那些最后一条是新的按 timestamp 正序排序，不然用户更新 last_messages_read_time 会导致时间靠前的全部被标记已读
     new_items = sorted(new_items, key=itemgetter('timestamp'))
     data['items'] = new_items + not_new_items
@@ -503,3 +507,39 @@ def get_user_notifications(id):
     notifications = user.notifications.filter(
         Notification.timestamp > since).order_by(Notification.timestamp.asc())
     return jsonify([n.to_dict() for n in notifications])
+
+
+# 拉黑一个用户
+@bp.route('/block/<int:id>', methods=['GET'])
+@token_auth.login_required
+def block(id):
+    """拉黑一个用户"""
+    user = User.query.get_or_404(id)
+    if g.current_user == user:
+        return bad_request('You cannot block yourself.')
+    if g.current_user.is_blocking(user):
+        return bad_request('You have already blocked that user.')
+    g.current_user.block(user)
+    db.session.commit()
+    return jsonify({
+        'status': 'success',
+        'message': 'You are now blocking %s.' % (user.name if user.name else user.username)
+    })
+
+
+# 移除黑名单
+@bp.route('/unblock/<int:id>', methods=['GET'])
+@token_auth.login_required
+def unblock(id):
+    """把一个用户移除黑名单"""
+    user = User.query.get_or_404(id)
+    if g.current_user == user:
+        return bad_request('You cannot unblock yourself.')
+    if not g.current_user.is_blocking(user):
+        return bad_request('You are not blocking this user.')
+    g.current_user.unblock(user)
+    db.session.commit()
+    return jsonify({
+        'status': 'success',
+        'message': 'You are not blocking %s anymore.' % (user.name if user.name else user.username)
+    })
