@@ -4,9 +4,12 @@ import Router from 'vue-router'
 import VueScrollTo from 'vue-scrollto'
 // 首页
 import Home from '@/components/Home'
-// 用户认证：注册与登录
+// 用户认证：注册、登录、验证账户、重置密码请求、重置密码
 import Register from '@/components/Auth/Register'
 import Login from '@/components/Auth/Login'
+import Unconfirmed from '@/components/Auth/Unconfirmed'
+import ResetPasswordRequest from '@/components/Auth/ResetPasswordRequest'
+import ResetPassword from '@/components/Auth/ResetPassword'
 // 用户个人主页
 import User from '@/components/Profile/User'
 import Overview from '@/components/Profile/Overview'
@@ -37,9 +40,19 @@ import CommentsLikes from '@/components/Notifications/CommentsLikes'
 import FollowingPosts from '@/components/Notifications/FollowingPosts'
 // 博客详情页
 import PostDetail from '@/components/PostDetail'
+// 管理后台
+import Admin from '@/components/Admin/Admin'
+import AdminRoles from '@/components/Admin/Roles'
+import AdminAddRole from '@/components/Admin/AddRole'
+import AdminEditRole from '@/components/Admin/EditRole'
+import AdminUsers from '@/components/Admin/Users'
+import AdminEditUser from '@/components/Admin/EditUser'
+import AdminPosts from '@/components/Admin/Posts'
+import AdminComments from '@/components/Admin/Comments'
+// 搜索结果页
+// import SearchResult from '@/components/SearchResult'
 // 测试与后端连通性
 import Ping from '@/components/Ping'
-
 
 Vue.use(Router)
 
@@ -76,7 +89,7 @@ const scrollBehavior = (to, from, savedPosition) => {
 }
 
 const router = new Router({
-  mode: 'history',  // 文章详情页 TOC 的锚点以数字开头，会被报错不合法: [Vue warn]: Error in nextTick: "SyntaxError: Failed to execute 'querySelector' on 'Document': '#13-git-clone' is not a valid selector."
+  // mode: 'history',  // 文章详情页 TOC 的锚点以数字开头，会被报错不合法: [Vue warn]: Error in nextTick: "SyntaxError: Failed to execute 'querySelector' on 'Document': '#13-git-clone' is not a valid selector."
   scrollBehavior,  // 不用这个，在需要跳转的改用 vue-scrollto
   routes: [
     {
@@ -93,6 +106,24 @@ const router = new Router({
       path: '/register',
       name: 'Register',
       component: Register
+    },
+    {
+      path: '/unconfirmed',
+      name: 'Unconfirmed',
+      component: Unconfirmed,
+      meta: {
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/reset-password-request',
+      name: 'ResetPasswordRequest',
+      component: ResetPasswordRequest
+    },
+    {
+      path: '/reset-password',
+      name: 'ResetPassword',
+      component: ResetPassword
     },
     {
       path: '/user/:id',
@@ -196,24 +227,69 @@ const router = new Router({
       path: '/ping',
       name: 'Ping',
       component: Ping
+    },
+    {
+      //后台管理
+      path: '/admin',
+      component: Admin,
+      children: [
+        {path: '', component: AdminRoles},
+        {path: 'roles', name: 'AdminRoles', component: AdminRoles},
+        {path: 'users', name: 'AdminUsers', component: AdminUsers},
+        {path: 'posts', name: 'AdminPosts', component: AdminPosts},
+        {path: 'comments', name: 'AdminComments', component: AdminComments},
+        {path: 'add-role', name: 'AdminAddRole', component: AdminAddRole},
+        {path: 'edit-role/:id', name: 'AdminEditRole', component: AdminEditRole},
+        {path: 'edit-user/:id', name: 'AdminEditUser', component: AdminEditUser},
+      ],
+      meta: {
+        requiresAuth: true,
+        requiresAdmin: true
+      }
     }
   ]
 })
 
 router.beforeEach((to, from, next) => {
   const token = window.localStorage.getItem('madblog-token')
+  if (token) {
+    var payload = JSON.parse(atob(token.split('.')[1]))
+
+    var user_perms = payload.permissions.split(",")
+  }
+
   if (to.matched.some(record => record.meta.requiresAuth) && (!token || token === null)) {
+    // 1. 用户未登录，但想访问需要认证的相关路由时，跳转到 登录 页
     Vue.toasted.show('Please log in to access this page.', {icon: 'fingerprint'})
     next({
       path: '/login',
       query: {redirect: to.fullPath}
     })
-  } else if (token && to.name == 'Login') {
-    // 用户已登录，但又去访问登录页面时不让他过去
+  } else if (token && !payload.confirmed && to.name != 'Unconfirmed') {
+    // 2. 用户刚注册，但是还没确认邮箱地址时，全部跳转到 认证提示 页面
+    Vue.toasted.show('Please confirm your accout to access this page.', {icon: 'fingerprint'})
+    next({
+      path: '/unconfirmed',
+      query: {redirect: to.fullPath}
+    })
+  } else if (token && payload.confirmed && to.name == 'Unconfirmed') {
+    // 3. 用户账户已确认，但又去访问 认证提示 页面时不让他过去
+    next({
+      path: '/'
+    })
+  } else if (token && (to.name == 'Login' || to.name == 'Register' || to.name == 'ResetPasswordRequest' || to.name == 'ResetPassword')) {
+    // 4. 用户已登录，但又去访问 登录/注册/请求重置密码/重置密码 页面时不让他过去
     next({
       path: from.fullPath
     })
-  } else if (to.matched.length === 0) {  // 要前往的路由不存在时
+  } else if (to.matched.some(record => record.meta.requiresAdmin) && token && !user_perms.includes('admin')) {
+    // 5. 普通用户想在浏览器地址中直接访问 /admin ，提示他没有权限，并跳转到首页
+    Vue.toasted.error('403: Forbidden', {icon: 'fingerprint'})
+    next({
+      path: '/'
+    })
+  } else if (to.matched.length === 0) {
+    // 6. 要前往的路由不存在时
     Vue.toasted.error('404: Not Found', {icon: 'fingerprint'})
     if (from.name) {
       next({
@@ -225,6 +301,7 @@ router.beforeEach((to, from, next) => {
       })
     }
   } else {
+    // 7. 正常路由出口
     next()
   }
 })

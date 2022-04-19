@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-''' Create instance of these flask extensions '''
+""" 创建这些flask扩展的实例 """
 from flask_cors import CORS
+from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
@@ -19,3 +20,5 @@ naming_convention = {
 db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention))
 # Flask-Migrate plugin
 migrate = Migrate(render_as_batch=True)
+# Flask-Mail plugin
+mail = Mail()

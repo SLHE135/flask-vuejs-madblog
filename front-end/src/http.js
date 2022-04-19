@@ -61,6 +61,10 @@ axios.interceptors.response.use(function (response) {
         Vue.toasted.error('500: Oops... INTERNAL SERVER ERROR', {icon: 'fingerprint'})
         router.back()
         break
+      case 405:
+        Vue.toasted.error('405: Method Not Allowed', {icon: 'fingerprint'})
+        router.back()
+        break
     }
   } else if (error.request) {
     console.log(error.request)

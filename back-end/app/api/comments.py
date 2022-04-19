@@ -4,12 +4,14 @@ from app.api import bp
 from app.api.auth import token_auth
 from app.api.errors import error_response, bad_request
 from app.extensions import db
-from app.models import Post, Comment
+from app.models import Post, Comment, Permission
+from app.utils.decorator import permission_required
 
 
 # 在某篇博客文章下面发表新评论
 @bp.route('/comments/', methods=['POST'])
 @token_auth.login_required
+@permission_required(Permission.COMMENT)
 def create_comment():
     '''在某篇博客文章下面发表新评论'''
     data = request.get_json()
@@ -96,7 +98,8 @@ def update_comment(id):
 def delete_comment(id):
     '''删除单个评论'''
     comment = Comment.query.get_or_404(id)
-    if g.current_user != comment.author and g.current_user != comment.post.author:
+    if g.current_user != comment.author and g.current_user != comment.post.author and not g.current_user.can(
+            Permission.ADMIN):
         return error_response(403)
     # 删除评论时:
     # 1. 如果是一级评论，只需要给文章作者发送新评论通知
@@ -120,6 +123,7 @@ def delete_comment(id):
 # 点赞评论
 @bp.route('/comments/<int:id>/like', methods=['GET'])
 @token_auth.login_required
+@permission_required(Permission.COMMENT)
 def like_comment(id):
     '''点赞评论'''
     comment = Comment.query.get_or_404(id)
@@ -140,6 +144,7 @@ def like_comment(id):
 # 取消点赞评论
 @bp.route('/comments/<int:id>/unlike', methods=['GET'])
 @token_auth.login_required
+@permission_required(Permission.COMMENT)
 def unlike_comment(id):
     '''取消点赞评论'''
     comment = Comment.query.get_or_404(id)

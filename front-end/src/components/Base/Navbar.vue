@@ -22,6 +22,9 @@
             <li class="nav-item">
               <router-link class="nav-link" to="/ping">Ping</router-link>
             </li>
+            <li v-if="sharedState.is_authenticated && sharedState.user_perms.includes('admin')" class="nav-item">
+              <router-link class="nav-link" to="/admin">Admin</router-link>
+            </li>
           </ul>
 
           <form v-if="sharedState.is_authenticated" class="form-inline navbar-left mr-auto">

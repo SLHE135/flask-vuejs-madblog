@@ -5,7 +5,7 @@ import click
 
 from app import create_app
 from app.extensions import db
-from app.models import User, Post, Comment
+from app.models import User, Post, Comment, Role, Notification, Message
 from config import Config
 
 app = create_app(Config)
@@ -59,3 +59,9 @@ def test(coverage):
         COV.html_report(directory=covdir)  # 生成html报告
         print('HTML版本: file://%s/index.html' % covdir)
         COV.erase()  # 清除coverage数据
+
+
+@app.shell_context_processor
+def make_shell_context():
+    return {'db': db, 'Role': Role, 'User': User, 'Post': Post, 'Comment': Comment,
+            'Notification': Notification, 'Message': Message}

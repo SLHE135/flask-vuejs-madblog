@@ -4,13 +4,15 @@ from app.api import bp
 from app.api.auth import token_auth
 from app.api.errors import error_response, bad_request
 from app.extensions import db
-from app.models import Post, Comment
+from app.models import Post, Comment, Permission
+from app.utils.decorator import permission_required
 
 
 @bp.route('/posts/', methods=['POST'])
 @token_auth.login_required
+@permission_required(Permission.WRITE)
 def create_post():
-    '''添加一篇新文章'''
+    """添加一篇新文章"""
     data = request.get_json()
     if not data:
         return bad_request('You must post JSON data.')
@@ -109,9 +111,9 @@ def update_post(id):
 @bp.route('/posts/<int:id>', methods=['DELETE'])
 @token_auth.login_required
 def delete_post(id):
-    '''删除一篇文章'''
+    """删除一篇文章"""
     post = Post.query.get_or_404(id)
-    if g.current_user != post.author:
+    if g.current_user != post.author and not g.current_user.can(Permission.ADMIN):  # 只有作者或管理员可以删除
         return error_response(403)
     db.session.delete(post)
     # 给文章作者的所有粉丝发送新文章通知(需要自动减1)
@@ -122,12 +124,10 @@ def delete_post(id):
     return '', 204
 
 
-###
 # 与博客文章资源相关的资源
-##
 @bp.route('/posts/<int:id>/comments/', methods=['GET'])
 def get_post_comments(id):
-    '''返回当前文章下面的一级评论'''
+    """返回当前文章下面的一级评论"""
     post = Post.query.get_or_404(id)
     page = request.args.get('page', 1, type=int)
     per_page = min(
@@ -150,7 +150,7 @@ def get_post_comments(id):
 @bp.route('/posts/<int:id>/like', methods=['GET'])
 @token_auth.login_required
 def like_post(id):
-    '''喜欢文章'''
+    """喜欢文章"""
     post = Post.query.get_or_404(id)
     post.liked_by(g.current_user)
     db.session.add(post)
