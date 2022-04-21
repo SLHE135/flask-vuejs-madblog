@@ -1,4 +1,6 @@
+import rq
 from flask import Flask
+from redis import Redis
 
 from app.api import bp as api_bp
 from app.extensions import cors, db, migrate, mail
@@ -26,6 +28,10 @@ def configure_app(app, config_class):
     app.config.from_object(config_class)
     # 不检查路由中最后是否有斜杠/
     app.url_map.strict_slashes = False
+    # 整合RQ任务队列
+    app.redis = Redis.from_url(app.config['REDIS_URL'])  # 创建 Redis 实例
+    # 创建 RQ 队列。设置任务队列中各任务的执行最大超时时间为 1 小时
+    app.task_queue = rq.Queue('madblog-tasks', connection=app.redis, default_timeout=3600)
 
 
 def configure_blueprints(app):
