@@ -26,4 +26,4 @@ class Config(object):
     # 发送邮件的配置
     ADMINS = ['1357667054@qq.com']  # 管理员邮箱
     # RQ连接redis
-    RQ_REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/'
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379/'
